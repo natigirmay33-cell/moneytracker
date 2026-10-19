@@ -1,0 +1,39 @@
+name: Build MoneyTrack APK
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'MoneyTrack_Android_Project_with_Build_Workflow.zip'
+      - '.github/workflows/android.yml'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download repository
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Extract Android project
+        run: |
+          unzip -o MoneyTrack_Android_Project_with_Build_Workflow.zip -d extracted
+          find extracted -name gradlew -type f -exec chmod +x {} \;
+
+      - name: Build APK
+        run: |
+          cd extracted
+          PROJECT_DIR=$(find . -name settings.gradle.kts -type f | head -n 1 | xargs dirname)
+          cd "$PROJECT_DIR"
+          gradle assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: MoneyTrack-APK
+          path: extracted/**/*.apk
